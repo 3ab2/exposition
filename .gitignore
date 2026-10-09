@@ -1,0 +1,4 @@
+node_modules/
+dist/
+qrcodes/
+npm-debug.log*
