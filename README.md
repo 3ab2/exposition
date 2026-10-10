@@ -2,6 +2,8 @@
 
 This project builds one image-only static page for each supported source file in `images/`. Original artwork is copied without modification. There is no homepage or gallery; `/` returns a blank 404 page.
 
+The shared `images/favicon.png` is copied byte-for-byte to `dist/favicon.png` and referenced from every artwork page using the root-relative path `/favicon.png`.
+
 ## Build and preview
 
 Use Node.js 20 or newer:

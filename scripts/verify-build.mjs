@@ -13,7 +13,9 @@ async function walk(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const fullPath = path.join(directory, entry.name);
     if (entry.isDirectory()) await walk(fullPath);
-    else if (entry.isFile()) sourceFiles.push(path.relative(sourceRoot, fullPath));
+    else if (entry.isFile() && path.relative(sourceRoot, fullPath) !== 'favicon.png') {
+      sourceFiles.push(path.relative(sourceRoot, fullPath));
+    }
   }
 }
 
@@ -50,6 +52,9 @@ function parseCsv(contents) {
 }
 
 await walk(sourceRoot);
+const sourceFavicon = await readFile(path.join(sourceRoot, 'favicon.png'));
+const outputFavicon = await readFile(path.join(output, 'favicon.png'));
+assert.ok(sourceFavicon.equals(outputFavicon), 'dist/favicon.png must be byte-identical to images/favicon.png.');
 sourceFiles.sort((left, right) => {
   const a = left.split(path.sep).join('/');
   const b = right.split(path.sep).join('/');
@@ -77,6 +82,8 @@ for (const relativePath of sourceFiles) {
   assert.equal(images.length, 1, `${id} must contain exactly one image.`);
   assert.doesNotMatch(page, /<title|<script\b|<a\b|<nav\b|<header\b|<footer\b|<h[1-6]\b|<p\b|<button\b|<figcaption\b/i, `${id} must not contain titles or UI.`);
   assert.match(page, /<body[^>]*>\s*<img\b[^>]*>\s*<\/body>/i, 'The image should be the entire body content.');
+  assert.equal((page.match(/rel="icon"/g) || []).length, 1, `${id} must have exactly one favicon reference.`);
+  assert.match(page, /<link rel="icon" type="image\/png" href="\/favicon\.png">/, `${id} must use the root-relative PNG favicon.`);
   const source = images[0][0].match(/\bsrc="([^"]+)"/)?.[1];
   assert.ok(source, `${id} must reference its image directly.`);
   const decodedSource = decodeURIComponent(source.replace(/^\/images\//, '')).split('/').join(path.sep);
